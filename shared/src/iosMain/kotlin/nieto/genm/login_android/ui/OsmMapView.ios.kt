@@ -1,4 +1,3 @@
-// iosMain/.../ui/OsmMapView.ios.kt
 package nieto.genm.login_android.ui
 
 import androidx.compose.runtime.Composable
@@ -15,21 +14,19 @@ actual fun OsmMapView(
     longitud: Double,
     titulo: String,
     tieneUbicacionValida: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier,
+    esEditable: Boolean,
+    onUbicacionCambiada: ((lat: Double, lon: Double) -> Unit)?
 ) {
     UIKitView(
         modifier = modifier,
-        factory = {
-            MKMapView()
-        },
+        factory = { MKMapView() },
         update = { mapView ->
             val coordinate = CLLocationCoordinate2DMake(latitud, longitud)
             val distance = if (tieneUbicacionValida) 2000.0 else 500000.0
             val region = MKCoordinateRegionMakeWithDistance(coordinate, distance, distance)
 
             mapView.setRegion(region, animated = true)
-
-            // Limpiar pines anteriores
             mapView.removeAnnotations(mapView.annotations)
 
             if (tieneUbicacionValida) {

@@ -11,10 +11,10 @@ interface DireccionesDao {
 
     @Query("SELECT * FROM direcciones WHERE userId = :userId ORDER BY id DESC")
     fun obtenerPorUsuario(userId: Long): Flow<List<DireccionesEntity>>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(direccion: DireccionesEntity)
-
     @Query("DELETE FROM direcciones WHERE id = :direccionId AND userId = :userId")
     suspend fun eliminar(direccionId: Long, userId: Long)
+    @Update
+    suspend fun actualizar(direccion: DireccionesEntity)
 }

@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview
+//@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AppAndroidPreview() {
     val context = androidx.compose.ui.platform.LocalContext.current

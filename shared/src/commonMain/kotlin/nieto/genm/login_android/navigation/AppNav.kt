@@ -8,22 +8,26 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.launch
 import nieto.genm.login_android.data.UsuarioService
 import nieto.genm.login_android.data.local.DatabaseBuilder
 import nieto.genm.login_android.data.local.getRoomDatabase
 import nieto.genm.login_android.ui.HomeView
 import nieto.genm.login_android.ui.LoginView
+import nieto.genm.login_android.ui.NuevaUbicacionView
 import nieto.genm.login_android.ui.RegisterView
 
 object Rutas {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val HOME = "home"
+    const val NUEVA_UBICACION = "nueva_ubicacion"
 }
 
 @Composable
@@ -79,6 +83,8 @@ fun AppNav(builder: DatabaseBuilder) {
         )
     }
 
+    val scope = rememberCoroutineScope()
+
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Rutas.LOGIN) {
             LoginView(
@@ -109,6 +115,25 @@ fun AppNav(builder: DatabaseBuilder) {
                     settings.remove("userId")
                     navController.navigate(Rutas.LOGIN) {
                         popUpTo(Rutas.HOME) { inclusive = true }
+                    }
+                },
+                onNuevaUbicacion = { navController.navigate(Rutas.NUEVA_UBICACION) }
+            )
+        }
+
+        composable(Rutas.NUEVA_UBICACION) {
+            NuevaUbicacionView(
+                navController = navController,
+                token = settings.getString("jwt_token", ""),
+                userId = settings.getLong("userId", 0L),
+                onGuardarDireccion = { nuevaDireccion ->
+                    scope.launch {
+                        try {
+                            database.direccionDao().insertar(nuevaDireccion)
+                            navController.popBackStack()
+                        } catch (e: Exception) {
+                            println("ERROR AL GUARDAR DIRECCIÓN EN ROOM: ${e.message}")
+                        }
                     }
                 }
             )

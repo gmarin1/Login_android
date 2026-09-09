@@ -16,7 +16,9 @@ actual fun OsmMapView(
     longitud: Double,
     titulo: String,
     tieneUbicacionValida: Boolean,
-    modifier: Modifier
+    modifier: Modifier,
+    esEditable: Boolean,
+    onUbicacionCambiada: ((lat: Double, lon: Double) -> Unit)?
 ) {
     AndroidView(
         modifier = modifier.clipToBounds(),
@@ -25,13 +27,13 @@ actual fun OsmMapView(
             MapView(context).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
-                controller.setZoom(13.0)
+                controller.setZoom(15.0)
             }
         },
         update = { mapView ->
             val nuevoPunto = GeoPoint(latitud, longitud)
             mapView.controller.setCenter(nuevoPunto)
-            mapView.controller.setZoom(13.0)
+            mapView.controller.setZoom(18.0)
 
             mapView.overlays.clear()
             if (tieneUbicacionValida) {
@@ -39,6 +41,19 @@ actual fun OsmMapView(
                     position = nuevoPunto
                     title = titulo
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    isDraggable = esEditable
+
+                    if (esEditable) {
+                        setOnMarkerDragListener(object : Marker.OnMarkerDragListener {
+                            override fun onMarkerDragStart(marker: Marker?) {}
+                            override fun onMarkerDrag(marker: Marker?) {}
+                            override fun onMarkerDragEnd(marker: Marker?) {
+                                marker?.position?.let { pt ->
+                                    onUbicacionCambiada?.invoke(pt.latitude, pt.longitude)
+                                }
+                            }
+                        })
+                    }
                 }
                 mapView.overlays.add(marker)
             }

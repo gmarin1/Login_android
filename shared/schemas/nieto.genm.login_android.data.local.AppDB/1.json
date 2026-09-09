@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7526c5408eef6af7d2242281f8612867",
+    "identityHash": "9d7141f191bc5ecfcbde4c5614321311",
     "entities": [
       {
         "tableName": "direcciones",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `calle` TEXT NOT NULL, `numero` TEXT NOT NULL, `colonia` TEXT NOT NULL, `latitud` REAL NOT NULL, `longitud` REAL NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `calle` TEXT NOT NULL, `numero` TEXT NOT NULL, `colonia` TEXT NOT NULL, `municipio` TEXT NOT NULL, `codigoPostal` TEXT NOT NULL, `latitud` REAL NOT NULL, `longitud` REAL NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -39,6 +39,18 @@
             "notNull": true
           },
           {
+            "fieldPath": "municipio",
+            "columnName": "municipio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigoPostal",
+            "columnName": "codigoPostal",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "latitud",
             "columnName": "latitud",
             "affinity": "REAL",
@@ -61,7 +73,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7526c5408eef6af7d2242281f8612867')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9d7141f191bc5ecfcbde4c5614321311')"
     ]
   }
 }

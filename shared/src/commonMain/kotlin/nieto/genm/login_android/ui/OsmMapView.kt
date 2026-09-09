@@ -9,5 +9,7 @@ expect fun OsmMapView(
     longitud: Double,
     titulo: String,
     tieneUbicacionValida: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    esEditable: Boolean = false,
+    onUbicacionCambiada: ((lat: Double, lon: Double) -> Unit)? = null
 )

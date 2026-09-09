@@ -11,6 +11,8 @@ data class DireccionesEntity(
     val calle: String,
     val numero: String,
     val colonia: String,
+    val municipio: String = "",
+    val codigoPostal: String,
     val latitud: Double = 0.0,
     val longitud: Double = 0.0
 )

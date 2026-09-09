@@ -13,8 +13,7 @@ data class LoginResponse(
     val message: String? = null,
     val token: String? = null,
     val userId: Long? = null
-){
-}
+)
 
 @Serializable
 data class TokenResponseDTO(

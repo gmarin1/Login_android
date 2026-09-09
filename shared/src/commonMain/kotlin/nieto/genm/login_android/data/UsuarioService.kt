@@ -27,9 +27,8 @@ object UsuarioService {
             validateResponse { response ->
                 val statusCode = response.status
                 val rutaPeticion = response.call.request.url.encodedPath
-                if ((statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden) && !rutaPeticion.endsWith("/login")) {
+                if ((statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden) && !rutaPeticion.endsWith("/login"))
                     onSesionExpirada?.invoke()
-                }
             }
         }
     }

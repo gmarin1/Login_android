@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +29,8 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -53,7 +57,7 @@ import nieto.genm.login_android.data.remote.PlacesService
 import kotlin.time.Duration.Companion.milliseconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeView(token: String, userId: Long, database: AppDB, onLogout: () -> Unit) {
+fun HomeView(token: String, userId: Long, database: AppDB, onLogout: () -> Unit, onNuevaUbicacion: () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Direcciones", "Mapa")
     var direccionParaMapa by remember { mutableStateOf<DireccionesEntity?>(null) }
@@ -62,9 +66,7 @@ fun HomeView(token: String, userId: Long, database: AppDB, onLogout: () -> Unit)
     fun validarTokenAccion(accion: suspend () -> Unit) {
         scope.launch {
             val resultado = UsuarioService.verificarToken(token)
-            if (resultado.isSuccess) {
-                accion()
-            }
+            if (resultado.isSuccess) { accion() }
         }
     }
 
@@ -78,6 +80,11 @@ fun HomeView(token: String, userId: Long, database: AppDB, onLogout: () -> Unit)
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { validarTokenAccion {onNuevaUbicacion()} }
+            ){ Icon(imageVector = Icons.Default.Add, contentDescription = "Nueva Ubicacion") }
         }
     ) { paddingValues ->
         Column(
@@ -106,7 +113,21 @@ fun HomeView(token: String, userId: Long, database: AppDB, onLogout: () -> Unit)
                         }
                     }
                 )
-                1 -> MapaTab(direccionSeleccionada = direccionParaMapa)
+                1 -> MapaTab(
+                    direccionSeleccionada = direccionParaMapa,
+                    onGuardarUbicacionAjustada = { nuevaLat, nuevaLon ->
+                        validarTokenAccion {
+                            direccionParaMapa?.let { dirActual ->
+                                val direccionActualizada = dirActual.copy(
+                                    latitud = nuevaLat,
+                                    longitud = nuevaLon
+                                )
+                                database.direccionDao().actualizar(direccionActualizada)
+                                direccionParaMapa = direccionActualizada
+                            }
+                        }
+                    }
+                )
             }
         }
     }
@@ -182,6 +203,7 @@ fun DireccionesTab(token: String,userId: Long, database: AppDB,onDireccionSelecc
                                         calle = seleccion.descripcion,
                                         numero = "",
                                         colonia = "",
+                                        codigoPostal = seleccion.codigoPostal,
                                         latitud = seleccion.latitud,
                                         longitud = seleccion.longitud
                                     )
@@ -235,34 +257,71 @@ fun DireccionesTab(token: String,userId: Long, database: AppDB,onDireccionSelecc
 }
 
 @Composable
-fun MapaTab(direccionSeleccionada: DireccionesEntity?) {
+fun MapaTab(
+    direccionSeleccionada: DireccionesEntity?,
+    onGuardarUbicacionAjustada: (nuevaLat: Double, nuevaLon: Double) -> Unit
+) {
     val tieneUbicacionValida = direccionSeleccionada != null
 
-    val lat = direccionSeleccionada?.latitud ?: 19.432608
-    val lon = direccionSeleccionada?.longitud ?: -99.133209
+    val latOriginal = direccionSeleccionada?.latitud ?: 19.432608
+    val lonOriginal = direccionSeleccionada?.longitud ?: -99.133209
+
+    var latMod by remember(direccionSeleccionada) { mutableStateOf(direccionSeleccionada?.latitud ?: 19.432608) }
+    var lonMod by remember(direccionSeleccionada) { mutableStateOf(direccionSeleccionada?.longitud ?: -99.133209) }
+    var fueEditado by remember(direccionSeleccionada) { mutableStateOf(false) }
+
     val titulo = direccionSeleccionada?.calle ?: "No se ha seleccionado ninguna ubicacion"
 
     Column(modifier = Modifier.fillMaxSize()) {
         Surface(tonalElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                Text(
-                    text = "Ubicacion en el mapa:",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Ubicación en el mapa:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(text = titulo, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                }
+
+                if (fueEditado && direccionSeleccionada != null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                latMod = latOriginal
+                                lonMod = lonOriginal
+                                fueEditado = false
+                            }
+                        ) { Text("Cancelar") }
+                        Button(
+                            onClick = {
+                                onGuardarUbicacionAjustada(latMod, lonMod)
+                                fueEditado = false
+                            }
+                        ) { Text("Guardar Pin") }
+                    }
+                }
             }
         }
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()){
             OsmMapView(
-                latitud = lat,
-                longitud = lon,
+                latitud = latMod,
+                longitud = lonMod,
                 titulo = titulo,
                 tieneUbicacionValida = tieneUbicacionValida,
+                esEditable = true,
+                onUbicacionCambiada = { nuevaLat, nuevaLon ->
+                    latMod = nuevaLat
+                    lonMod = nuevaLon
+                    fueEditado = true
+                },
                 modifier = Modifier.fillMaxSize()
             )
         }
